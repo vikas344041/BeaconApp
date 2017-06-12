@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Beacons</string>
+    <string name="username_error">Username cannot be empty</string>
+</resources>
