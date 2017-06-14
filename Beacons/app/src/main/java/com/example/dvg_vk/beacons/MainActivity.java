@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -25,9 +26,11 @@ import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
-public class MainActivity extends AppCompatActivity implements BeaconConsumer,MonitorNotifier,RangeNotifier{
+public class MainActivity extends AppCompatActivity{
 
     protected static final String TAG = "MainActivity";
     private BeaconManager mBeaconManager;
@@ -36,16 +39,20 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Mo
     private EditText txtUsername,txtAge,txtHeight,txtDesignation,txtFloor;
     private Boolean savedState=false;
     String prevUsername,prevAge,prevDesignation,prevHeight,prevFloor;
+    Intent mServiceIntent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //Config.list = new ArrayList<HashMap<String, String>>();
         assert getSupportActionBar() != null;
         getSupportActionBar().setLogo(R.mipmap.ibks);
         getSupportActionBar().setDisplayUseLogoEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        //getSupportActionBar().setDisplayShowTitleEnabled(false);
+        getSupportActionBar().setTitle("Beacon Manager");
 
         btn_back=(Button)findViewById(R.id.btn_back);
         btn_edit=(Button)findViewById(R.id.btn_edit);
@@ -69,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Mo
                     txtDesignation.setEnabled(false);
                     txtFloor.setEnabled(false);
                     btn_back.setAlpha(0.5f);
+                    sendDataToBackgroundService();
                 }
                 else {
                     btn_back.setEnabled(true);
@@ -112,19 +120,63 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Mo
                 txtFloor.setEnabled(false);
                 btn_back.setAlpha(0.5f);
                 savedState=false;
+                sendDataToBackgroundService();
             }
 
         });
 
+        /*
+        * Creates a new Intent to start the RSSPullService
+        * IntentService. Passes a URI in the
+        * Intent's "data" field.
+        */
+        sendDataToBackgroundService();
     }
     @Override
     public void onResume() {
         super.onResume();
-        mBeaconManager = BeaconManager.getInstanceForApplication(this.getApplicationContext());
+        /*mBeaconManager = BeaconManager.getInstanceForApplication(this.getApplicationContext());
         // Detect the main Eddystone-UID frame:
         mBeaconManager.getBeaconParsers().add(new BeaconParser().
                 setBeaconLayout(BeaconParser.EDDYSTONE_UID_LAYOUT));
-        mBeaconManager.bind(this);
+        mBeaconManager.bind(this);*/
+    }
+
+    public void didEnterRegion(Region region) {
+
+    }
+
+    public void didExitRegion(Region region) {
+    }
+
+    public void didDetermineStateForRegion(int state, Region region) {
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        //mBeaconManager.unbind(this);
+    }
+
+    /*@Override
+    public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+        Config.list.clear();
+        for (Beacon beacon: beacons) {
+            if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
+                HashMap<String, String> beaconList = new HashMap<String, String>();
+                // This is a Eddystone-UID frame
+                Identifier namespaceId = beacon.getId1();
+                Identifier instanceId = beacon.getId2();
+                Log.d(TAG, "I see a beacon transmitting namespace id: "+namespaceId+
+                        " and instance id: "+instanceId+
+                        " approximately "+beacon.getDistance()+" meters away."+beacon.getBluetoothName());
+
+                beaconList.put("Beacon_Name",beacon.getBluetoothName());
+                beaconList.put("Beacon_Distance",String.valueOf(beacon.getDistance()));
+                beaconList.put("Beacon_Uuid",String.valueOf(namespaceId).substring(2)+String.valueOf(instanceId).substring(2));
+                Config.list.add(beaconList);
+            }
+        }
     }
 
     @Override
@@ -144,41 +196,17 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Mo
             e.printStackTrace();
         }
         mBeaconManager.addRangeNotifier(this);
-    }
-
-    public void didEnterRegion(Region region) {
-        Log.d(TAG, "I detected a beacon in the region with namespace id " + region.getId1() +
-                " and instance id: " + region.getId2());
-    }
-
-    public void didExitRegion(Region region) {
-    }
-
-    public void didDetermineStateForRegion(int state, Region region) {
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        mBeaconManager.unbind(this);
-    }
-
-    @Override
-    public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
-        for (Beacon beacon: beacons) {
-            if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
-                // This is a Eddystone-UID frame
-                Identifier namespaceId = beacon.getId1();
-                Identifier instanceId = beacon.getId2();
-                Log.d(TAG, "I see a beacon transmitting namespace id: "+namespaceId+
-                        " and instance id: "+instanceId+
-                        " approximately "+beacon.getDistance()+" meters away.");
-            }
-        }
-    }
+    }*/
 
     @Override
     public void onBackPressed(){
         moveTaskToBack(true);
+        sendDataToBackgroundService();
+    }
+
+    private void sendDataToBackgroundService(){
+        mServiceIntent = new Intent(context, BackgroundSubscribeIntentService.class);
+        mServiceIntent.putExtra("username","User = "+txtUsername.getText().toString());
+        context.startService(mServiceIntent);
     }
 }
