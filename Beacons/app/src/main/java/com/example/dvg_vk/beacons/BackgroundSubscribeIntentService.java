@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.altbeacon.beacon.Beacon;
@@ -21,6 +22,7 @@ import org.altbeacon.beacon.Region;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by dvg-vk on 14.06.2017.
@@ -31,7 +33,9 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
     private static final int MESSAGES_NOTIFICATION_ID = 1;
     private BeaconManager mBeaconManager;
     protected static final String TAG = "BackgroundService";
+    private static final int NUM_MESSAGES_IN_NOTIFICATION = 5;
     private  String username;
+    private String[] content;
 
     public BackgroundSubscribeIntentService() {
         super("BackgroundSubscribeIntentService");
@@ -96,8 +100,17 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
                 launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         String contentTitle = username;
-        String contentText = Config.list.get(0).get("Beacon_Name")+" | "+Config.list.get(0).get("Beacon_Distance");
-
+        String contentText="";
+        if(!Config.list.isEmpty()){
+            content=new String[Config.list.size()];
+            for(int i=0;i<Config.list.size();i++){
+                content[i]=Config.list.get(i).get("Beacon_Name")+" | "+Config.list.get(i).get("Beacon_Distance");
+            }
+           contentText = Config.list.get(0).get("Beacon_Name")+" | "+Config.list.get(0).get("Beacon_Distance");
+        }
+        else{
+            contentText="No Beacon found";
+        }
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.mipmap.ibks)
                 .setContentTitle(contentTitle)
@@ -105,7 +118,29 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText))
                 .setOngoing(true)
                 .setContentIntent(pi);
+        if(Config.list.size()>0){
+            NotificationCompat.InboxStyle inboxStyle =
+                    new NotificationCompat.InboxStyle();
+            inboxStyle.setBigContentTitle(contentTitle);
+            // Moves events into the expanded layout
+            for (int i=0; i < content.length; i++) {
+
+                inboxStyle.addLine(content[i]);
+            }
+            // Moves the expanded layout object into the notification object.
+            notificationBuilder.setStyle(inboxStyle);
+        }
+
         notificationManager.notify(MESSAGES_NOTIFICATION_ID, notificationBuilder.build());
+    }
+
+    private String getContentText(List<String> messages) {
+        String newline = System.getProperty("line.separator");
+        if (messages.size() < NUM_MESSAGES_IN_NOTIFICATION) {
+            return TextUtils.join(newline, messages);
+        }
+        return TextUtils.join(newline, messages.subList(0, NUM_MESSAGES_IN_NOTIFICATION)) +
+                newline + "&#8230;";
     }
 
 }
