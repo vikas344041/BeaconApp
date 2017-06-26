@@ -9,4 +9,5 @@ import java.util.HashMap;
 
 public class Config {
     public static ArrayList<HashMap<String,String>> list;
+    public static String user;
 }

@@ -3,12 +3,16 @@ package com.example.dvg_vk.beacons;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.example.dvg_vk.beacons.DAO.RequestHandler;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -18,7 +22,11 @@ import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,10 +44,13 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
     private static final int NUM_MESSAGES_IN_NOTIFICATION = 5;
     private  String username;
     private String[] content;
+    String json_string;
+    DecimalFormat df;
 
     public BackgroundSubscribeIntentService() {
         super("BackgroundSubscribeIntentService");
         Config.list = new ArrayList<HashMap<String, String>>();
+        df = new DecimalFormat("#.0000");
     }
 
     @Override
@@ -59,22 +70,46 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
     @Override
     public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
         Config.list.clear();
-        for (Beacon beacon: beacons) {
-            if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
-                HashMap<String, String> beaconList = new HashMap<String, String>();
-                // This is a Eddystone-UID frame
-                Identifier namespaceId = beacon.getId1();
-                Identifier instanceId = beacon.getId2();
-                Log.d(TAG, "I see a beacon transmitting namespace id: "+namespaceId+
-                        " and instance id: "+instanceId+
-                        " approximately "+beacon.getDistance()+" meters away."+beacon.getBluetoothName());
+        json_string="";
+        try {
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.put("user", Config.user);
+            try {
+                // In this case we need a json array to hold the java list
+                JSONArray jsonArr = new JSONArray();
 
-                beaconList.put("Beacon_Name",beacon.getBluetoothName());
-                beaconList.put("Beacon_Distance",String.valueOf(beacon.getDistance()));
-                beaconList.put("Beacon_Uuid",String.valueOf(namespaceId).substring(2)+String.valueOf(instanceId).substring(2));
-                Config.list.add(beaconList);
+                for (Beacon beacon : beacons) {
+                    if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
+                        JSONObject jsonBeacon=new JSONObject();
+                        HashMap<String, String> beaconList = new HashMap<String, String>();
+                        // This is a Eddystone-UID frame
+                        Identifier namespaceId = beacon.getId1();
+                        Identifier instanceId = beacon.getId2();
+                        Log.d(TAG, "I see a beacon transmitting namespace id: " + namespaceId +
+                                " and instance id: " + instanceId +
+                                " approximately " + beacon.getDistance() + " meters away." + beacon.getBluetoothName());
+
+                        beaconList.put("Beacon_Name", beacon.getBluetoothName());
+                        beaconList.put("Beacon_Distance", String.valueOf(df.format(beacon.getDistance())));
+                        beaconList.put("Beacon_Uuid", String.valueOf(namespaceId).substring(2) + String.valueOf(instanceId).substring(2));
+                        Config.list.add(beaconList);
+
+                        jsonBeacon.put("uuid", String.valueOf(namespaceId).substring(2) + String.valueOf(instanceId).substring(2));
+                        jsonBeacon.put("distance", df.format(beacon.getDistance()));
+                        jsonArr.put(jsonBeacon);
+                    }
+                }
+                jsonObj.put("beacons", jsonArr);
+                json_string=jsonObj.toString();
+
+            } catch (JSONException e) {
+                Log.d(TAG, "Cant find beacon");
             }
         }
+        catch (JSONException e) {
+            Log.d(TAG, "Cant find beacon");
+        }
+        getJSON();
         displayNotification();
     }
 
@@ -134,13 +169,44 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
         notificationManager.notify(MESSAGES_NOTIFICATION_ID, notificationBuilder.build());
     }
 
-    private String getContentText(List<String> messages) {
-        String newline = System.getProperty("line.separator");
-        if (messages.size() < NUM_MESSAGES_IN_NOTIFICATION) {
-            return TextUtils.join(newline, messages);
+    private void getJSON(){
+        final String url ="https://gurujsonrpc.appspot.com/guru";
+        class GetJSON extends AsyncTask<Void,Void,String> {
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+            @Override
+            protected String doInBackground(Void... params) {
+                RequestHandler rh = new RequestHandler();
+                try{
+                    JSONObject abc=new JSONObject();
+                    abc.put("method","guru.test");
+                    abc.put("id","123");
+                    json_string=abc.toString();
+                }
+                catch (JSONException e){
+
+                }
+                String s = rh.sendPostRequestJSON(url,json_string);
+
+                return s;
+            }
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                getBeaconResponse();
+            }
         }
-        return TextUtils.join(newline, messages.subList(0, NUM_MESSAGES_IN_NOTIFICATION)) +
-                newline + "&#8230;";
+        GetJSON gj = new GetJSON();
+        gj.execute();
+    }
+
+    private void getBeaconResponse(){
+        JSONObject jsonObject = null;
+
     }
 
 }

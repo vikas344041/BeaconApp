@@ -207,6 +207,7 @@ public class MainActivity extends AppCompatActivity{
     private void sendDataToBackgroundService(){
         mServiceIntent = new Intent(context, BackgroundSubscribeIntentService.class);
         mServiceIntent.putExtra("username","User = "+txtUsername.getText().toString());
+        Config.user=txtUsername.getText().toString();
         context.startService(mServiceIntent);
     }
 }
