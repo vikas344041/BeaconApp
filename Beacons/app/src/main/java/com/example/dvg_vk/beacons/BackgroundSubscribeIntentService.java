@@ -11,7 +11,15 @@ import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.dvg_vk.beacons.DAO.RequestHandler;
 
 import org.altbeacon.beacon.Beacon;
@@ -26,6 +34,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,6 +54,7 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
     private  String username;
     private String[] content;
     String json_string;
+    private String json_response;
     DecimalFormat df;
 
     public BackgroundSubscribeIntentService() {
@@ -74,6 +84,7 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
         try {
             JSONObject jsonObj = new JSONObject();
             jsonObj.put("user", Config.user);
+
             try {
                 // In this case we need a json array to hold the java list
                 JSONArray jsonArr = new JSONArray();
@@ -109,7 +120,7 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
         catch (JSONException e) {
             Log.d(TAG, "Cant find beacon");
         }
-        getJSON();
+        getJSON("https://gurujsonrpc.appspot.com/guru");
         displayNotification();
     }
 
@@ -169,44 +180,50 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
         notificationManager.notify(MESSAGES_NOTIFICATION_ID, notificationBuilder.build());
     }
 
-    private void getJSON(){
-        final String url ="https://gurujsonrpc.appspot.com/guru";
-        class GetJSON extends AsyncTask<Void,Void,String> {
+    private void getJSON(final String url){
+        try {
+            JSONObject ab=new JSONObject();
+            ab.put("method","guru.test");
+            ab.put("id","123");
+            json_string=ab.toString();
+        }catch (JSONException e){
+
+        }
+
+        class AddBeacon extends AsyncTask<Void,Void,String>{
+
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
             }
 
             @Override
-            protected String doInBackground(Void... params) {
-                RequestHandler rh = new RequestHandler();
-                try{
-                    JSONObject abc=new JSONObject();
-                    abc.put("method","guru.test");
-                    abc.put("id","123");
-                    json_string=abc.toString();
-                }
-                catch (JSONException e){
-
-                }
-                String s = rh.sendPostRequestJSON(url,json_string);
-
-                return s;
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+                json_response=s;
+                getBeaconResponse();
             }
 
             @Override
-            protected void onPostExecute(String s) {
-                super.onPostExecute(s);
-                getBeaconResponse();
+            protected String doInBackground(Void... v) {
+                //HashMap<String, String> params = new HashMap<>();
+                // params.put(Config.TAG_JSON_DATA,json_string);
+                //String JsonResponse = null;
+                //String JsonDATA = params[0];
+
+                RequestHandler rh = new RequestHandler();
+                String res = rh.sendPostRequestJSON(url, json_string);
+                return res;
+
             }
         }
-        GetJSON gj = new GetJSON();
-        gj.execute();
+
+        AddBeacon anm = new AddBeacon();
+        anm.execute();
     }
 
     private void getBeaconResponse(){
-        JSONObject jsonObject = null;
-
+        Toast.makeText(getApplicationContext(), json_response, Toast.LENGTH_LONG).show();
     }
 
 }
