@@ -10,4 +10,5 @@ import java.util.HashMap;
 public class Config {
     public static ArrayList<HashMap<String,String>> list;
     public static String user;
+    public static String URL="http://153.97.4.191:8082/updateBeacon";
 }

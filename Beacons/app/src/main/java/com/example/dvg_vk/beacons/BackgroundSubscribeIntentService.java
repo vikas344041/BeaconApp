@@ -56,6 +56,8 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
     String json_string;
     private String json_response;
     DecimalFormat df;
+    private Integer[] distanceArray;
+    HashMap<String, Float> hash = new HashMap<String, Float>();
 
     public BackgroundSubscribeIntentService() {
         super("BackgroundSubscribeIntentService");
@@ -108,6 +110,7 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
                         jsonBeacon.put("uuid", String.valueOf(namespaceId).substring(2) + String.valueOf(instanceId).substring(2));
                         jsonBeacon.put("distance", df.format(beacon.getDistance()));
                         jsonArr.put(jsonBeacon);
+                        hash.put(String.valueOf(namespaceId).substring(2) + String.valueOf(instanceId).substring(2),Float.valueOf(df.format(beacon.getDistance())));
                     }
                 }
                 jsonObj.put("beacons", jsonArr);
@@ -120,7 +123,7 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
         catch (JSONException e) {
             Log.d(TAG, "Cant find beacon");
         }
-        getJSON("https://gurujsonrpc.appspot.com/guru");
+        getJSON(Config.URL);
         displayNotification();
     }
 
@@ -181,15 +184,6 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
     }
 
     private void getJSON(final String url){
-        try {
-            JSONObject ab=new JSONObject();
-            ab.put("method","guru.test");
-            ab.put("id","123");
-            json_string=ab.toString();
-        }catch (JSONException e){
-
-        }
-
         class AddBeacon extends AsyncTask<Void,Void,String>{
 
             @Override
@@ -201,7 +195,7 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
             protected void onPostExecute(String s) {
                 super.onPostExecute(s);
                 json_response=s;
-                getBeaconResponse();
+                //getBeaconResponse();
             }
 
             @Override
