@@ -102,7 +102,6 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
                         jsonBeacon.put("uuid", String.valueOf(namespaceId).substring(2) + String.valueOf(instanceId).substring(2));
                         jsonBeacon.put("distance", df.format(beacon.getDistance()));
                         jsonArr.put(jsonBeacon);
-                        hash.put(String.valueOf(namespaceId).substring(2) + String.valueOf(instanceId).substring(2),Float.valueOf(df.format(beacon.getDistance())));
                     }
                 }
                 jsonObj.put("beacons", jsonArr);
@@ -211,5 +210,7 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
     private void getBeaconResponse(){
         Toast.makeText(getApplicationContext(), json_response, Toast.LENGTH_LONG).show();
     }
+
+
 
 }
