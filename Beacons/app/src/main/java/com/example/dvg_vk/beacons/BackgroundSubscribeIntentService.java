@@ -22,6 +22,7 @@ import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+import org.altbeacon.beacon.powersave.BackgroundPowerSaver;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -68,11 +69,35 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
         // Detect the telemetry Eddystone-TLM frame:
         mBeaconManager.getBeaconParsers().add(new BeaconParser().
                 setBeaconLayout(BeaconParser.EDDYSTONE_TLM_LAYOUT));
+        mBeaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout(BeaconParser.ALTBEACON_LAYOUT));
+
+        //konkakt?
+        mBeaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"));
+        mBeaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
+        mBeaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:0-3=4c000215,i:4-19,i:20-21,i:22-23,p:24-24"));
+
+        mBeaconManager.setBackgroundBetweenScanPeriod(1200);
+
+        mBeaconManager.setBackgroundScanPeriod(100L);          // default is 10000L
+        mBeaconManager.setForegroundBetweenScanPeriod(0L);      // default is 0L
+        mBeaconManager.setForegroundScanPeriod(1100L);          // Default is 1100L
+
+        mBeaconManager.addRangeNotifier(this);
+
         mBeaconManager.bind(this);
     }
 
     @Override
     public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+        mBeaconManager.setBackgroundBetweenScanPeriod(1200);
+
+        mBeaconManager.setBackgroundScanPeriod(100L);          // default is 10000L
+        mBeaconManager.setForegroundBetweenScanPeriod(0L);      // default is 0L
+        mBeaconManager.setForegroundScanPeriod(1100L);          // Default is 1100L
+
+        mBeaconManager.addRangeNotifier(this);
+
+        mBeaconManager.bind(this);
         Config.list.clear();
         json_string="";
         try {
