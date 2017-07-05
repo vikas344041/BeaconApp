@@ -34,6 +34,7 @@
         <service
             android:name="com.example.dvg_vk.beacons.BackgroundSubscribeIntentService"
             android:exported="false" />
+        <service android:enabled="true" android:name="com.example.dvg_vk.beacons.BackGroundService" />
     </application>
 
 </manifest>

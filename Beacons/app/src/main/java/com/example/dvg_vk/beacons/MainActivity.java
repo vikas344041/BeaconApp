@@ -211,7 +211,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
     }
 
     private void sendDataToBackgroundService(){
-        mServiceIntent = new Intent(context, BackgroundSubscribeIntentService.class);
+        mServiceIntent = new Intent(context, BackGroundService.class);
         mServiceIntent.putExtra("username",txtUsername.getText().toString());
         Config.user=txtUsername.getText().toString();
         context.startService(mServiceIntent);
