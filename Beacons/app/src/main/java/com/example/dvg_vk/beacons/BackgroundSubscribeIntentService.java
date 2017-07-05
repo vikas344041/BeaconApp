@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -59,6 +60,12 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
     }
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        onStart(intent, startId);
+        return START_STICKY;
+    }
+
+    @Override
     public void onHandleIntent(Intent intent){
         // Gets data from the incoming Intent
         username= intent.getStringExtra("username");
@@ -76,11 +83,11 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
         mBeaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
         mBeaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:0-3=4c000215,i:4-19,i:20-21,i:22-23,p:24-24"));
 
-        mBeaconManager.setBackgroundBetweenScanPeriod(1200);
+        mBeaconManager.setBackgroundBetweenScanPeriod(12000);
 
-        mBeaconManager.setBackgroundScanPeriod(100L);          // default is 10000L
+        mBeaconManager.setBackgroundScanPeriod(10000L);          // default is 10000L
         mBeaconManager.setForegroundBetweenScanPeriod(0L);      // default is 0L
-        mBeaconManager.setForegroundScanPeriod(1100L);          // Default is 1100L
+        mBeaconManager.setForegroundScanPeriod(4000L);          // Default is 1100L
 
         mBeaconManager.addRangeNotifier(this);
 
@@ -89,15 +96,6 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
 
     @Override
     public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
-        mBeaconManager.setBackgroundBetweenScanPeriod(1200);
-
-        mBeaconManager.setBackgroundScanPeriod(100L);          // default is 10000L
-        mBeaconManager.setForegroundBetweenScanPeriod(0L);      // default is 0L
-        mBeaconManager.setForegroundScanPeriod(1100L);          // Default is 1100L
-
-        mBeaconManager.addRangeNotifier(this);
-
-        mBeaconManager.bind(this);
         Config.list.clear();
         json_string="";
         try {
@@ -140,7 +138,7 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
             Log.d(TAG, "Cant find beacon");
         }
         getJSON(Config.URL);
-        displayNotification();
+       displayNotification();
     }
 
 
