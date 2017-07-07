@@ -63,7 +63,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
     String json_string;
     private String json_response;
     DecimalFormat df;
-    MenuItem item;
+    MenuItem menuItemTtile;
+    private Menu menu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -242,6 +243,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
     public boolean onCreateOptionsMenu(Menu menu){
 
         getMenuInflater().inflate(R.menu.main_menu, menu);
+        this.menu = menu;
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -253,13 +255,13 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
                 if(isPlaying){
                     isPlaying=false;
                     item.setIcon(R.drawable.ic_action_playback_play);
-                    item.setTitle("Paused");
+                    menu.getItem(0).setTitle(getResources().getString(R.string.menu_title_stop));
                     pauseScan();
                 }
                 else{
                     isPlaying=true;
                     item.setIcon(R.drawable.ic_action_playback_pause);
-                    item.setTitle("Running");
+                    menu.getItem(0).setTitle(getResources().getString(R.string.menu_title_start));
                     startScan();
                 }
                 return true;
