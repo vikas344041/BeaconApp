@@ -90,7 +90,7 @@ public class BackGroundService extends Service implements BeaconConsumer,RangeNo
 
     @Override
     public void onDestroy() {
-
+        stopSelf();
     }
 
     @Override
@@ -105,7 +105,7 @@ public class BackGroundService extends Service implements BeaconConsumer,RangeNo
         json_string="";
         try {
             JSONObject jsonObj = new JSONObject();
-            jsonObj.put("user", Config.user);
+            jsonObj.put("user", Config.USER);
 
             try {
                 // In this case we need a json array to hold the java list
@@ -167,7 +167,7 @@ public class BackGroundService extends Service implements BeaconConsumer,RangeNo
         PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
                 launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        String contentTitle = username;
+        String contentTitle = Config.USER;
         String contentText="";
         if(!Config.list.isEmpty()){
             content=new String[Config.list.size()];

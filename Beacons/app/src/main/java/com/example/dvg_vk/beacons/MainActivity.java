@@ -25,6 +25,8 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.dvg_vk.beacons.DAO.RequestHandler;
@@ -61,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
     String json_string;
     private String json_response;
     DecimalFormat df;
+    MenuItem item;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
         getSupportActionBar().setDisplayUseLogoEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         //getSupportActionBar().setDisplayShowTitleEnabled(false);
-        getSupportActionBar().setTitle("Beacon Manager");
+        getSupportActionBar().setTitle("BeaconApp");
 
         mBeaconManager = BeaconManager.getInstanceForApplication(this.getApplicationContext());
         // Detect the main Eddystone-UID frame:
@@ -112,6 +115,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
                     txtDesignation.setEnabled(false);
                     txtFloor.setEnabled(false);
                     btn_back.setAlpha(0.5f);
+                    Config.USER=txtUsername.getText().toString();
                     displayNotification();
                 }
                 else {
@@ -142,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
             public void onClick(View arg0) {
                 // TODO Auto-generated method stub
                 txtUsername.setText(prevUsername);
+                Config.USER=txtUsername.getText().toString();
                 txtAge.setText(prevAge);
                 txtDesignation.setText(prevDesignation);
                 txtHeight.setText(prevHeight);
@@ -169,6 +174,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
                     savedState=false;
                     btn_back.setEnabled(false);
                     btn_edit.setText("EDIT");
+                    Config.USER=txtUsername.getText().toString();
                     txtUsername.setEnabled(false);
                     txtAge.setEnabled(false);
                     txtHeight.setEnabled(false);
@@ -196,6 +202,10 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
         mBeaconManager.getBeaconParsers().add(new BeaconParser().
                 setBeaconLayout(BeaconParser.EDDYSTONE_UID_LAYOUT));
         mBeaconManager.bind(this);
+        if(!isPlaying){
+            stopBackgroundService();
+            pauseScan();
+        }
     }
 
     @Override
@@ -207,14 +217,25 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
     @Override
     public void onBackPressed(){
         moveTaskToBack(true);
-        sendDataToBackgroundService();
+        if(isPlaying){
+            sendDataToBackgroundService();
+        }
     }
 
     private void sendDataToBackgroundService(){
         mServiceIntent = new Intent(context, BackGroundService.class);
         mServiceIntent.putExtra("username",txtUsername.getText().toString());
-        Config.user=txtUsername.getText().toString();
+        Config.USER=txtUsername.getText().toString();
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancelAll();
         context.startService(mServiceIntent);
+    }
+
+    private void stopBackgroundService(){
+        mServiceIntent = new Intent(context, BackGroundService.class);
+        Config.USER=txtUsername.getText().toString();
+        context.stopService(mServiceIntent);
     }
 
     @Override
@@ -232,11 +253,13 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
                 if(isPlaying){
                     isPlaying=false;
                     item.setIcon(R.drawable.ic_action_playback_play);
+                    item.setTitle("Paused");
                     pauseScan();
                 }
                 else{
                     isPlaying=true;
                     item.setIcon(R.drawable.ic_action_playback_pause);
+                    item.setTitle("Running");
                     startScan();
                 }
                 return true;
@@ -251,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
         json_string="";
         try {
             JSONObject jsonObj = new JSONObject();
-            jsonObj.put("user", Config.user);
+            jsonObj.put("user", Config.USER);
 
             try {
                 // In this case we need a json array to hold the java list
@@ -288,8 +311,13 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
         catch (JSONException e) {
             Log.d(TAG, "Cant find beacon");
         }
-        getJSON(Config.URL);
-        displayNotification();
+        if(isPlaying){
+            displayNotification();
+            getJSON(Config.URL);
+        }
+        else{
+            pauseScan();
+        }
     }
 
     @Override
@@ -343,8 +371,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
             // Moves the expanded layout object into the notification object.
             notificationBuilder.setStyle(inboxStyle);
         }
+            notificationManager.notify(MESSAGES_NOTIFICATION_ID, notificationBuilder.build());
 
-        notificationManager.notify(MESSAGES_NOTIFICATION_ID, notificationBuilder.build());
     }
 
     private void getJSON(final String url){

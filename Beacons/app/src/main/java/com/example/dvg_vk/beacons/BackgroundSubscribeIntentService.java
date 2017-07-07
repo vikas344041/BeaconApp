@@ -100,7 +100,7 @@ public class BackgroundSubscribeIntentService extends IntentService implements B
         json_string="";
         try {
             JSONObject jsonObj = new JSONObject();
-            jsonObj.put("user", Config.user);
+            jsonObj.put("user", Config.USER);
 
             try {
                 // In this case we need a json array to hold the java list
