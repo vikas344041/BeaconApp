@@ -5,13 +5,12 @@
     tools:context=".MainActivity">
 
     <item android:id="@+id/menu_item_title"
-        android:title="@string/menu_title_start"
-        android:titleCondensed="@string/menu_title_start"
+        android:title="@string/menu_title_stop"
         app:showAsAction="always"
         />
     <item android:id="@+id/menu_item"
         android:title=""
-        android:icon="@drawable/ic_action_playback_pause"
+        android:icon="@drawable/ic_action_playback_play"
         app:showAsAction="always"
         />
 </menu>

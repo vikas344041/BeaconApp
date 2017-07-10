@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -243,7 +244,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
     public boolean onCreateOptionsMenu(Menu menu){
 
         getMenuInflater().inflate(R.menu.main_menu, menu);
-        this.menu = menu;
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -255,19 +255,36 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer,Ra
                 if(isPlaying){
                     isPlaying=false;
                     item.setIcon(R.drawable.ic_action_playback_play);
-                    menu.getItem(0).setTitle(getResources().getString(R.string.menu_title_stop));
+                    invalidateOptionsMenu();
                     pauseScan();
                 }
                 else{
                     isPlaying=true;
                     item.setIcon(R.drawable.ic_action_playback_pause);
-                    menu.getItem(0).setTitle(getResources().getString(R.string.menu_title_start));
+                    invalidateOptionsMenu();
+                    /*menu.removeItem(R.id.menu_item_title);
+                    menu.add(0, R.id.menu_item_title, 0, "bbb");
+                    menu.getItem(1).setIcon(null);*/
                     startScan();
                 }
                 return true;
 
             default: return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu)
+    {
+        menu.clear();
+        MenuInflater myMenuInflater = getMenuInflater();
+        if(isPlaying)
+        {
+            myMenuInflater.inflate(R.menu.main_menu, menu);
+        } else {
+            myMenuInflater.inflate(R.menu.main_menu2, menu); // here you show the other menu
+        }
+        return true;
     }
 
     @Override
